@@ -9,7 +9,36 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  # Every .NET sample is standalone: build the folder, run it, hold it to its own claims.
+  dotnet-samples:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: deterministic-kernel
+            expect: "byte-identical  : True"
+          - dir: netmq-event-pipeline
+            expect: "handshake first: received 1,000 of 1,000 events"
+          - dir: gated-agent-delivery
+            expect: "resumed after crash: True"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build ${{ matrix.dir }} --nologo
+
+      - name: Run and verify
+        run: |
+          dotnet run --project ${{ matrix.dir }} --no-build | tee run.out
+          grep -F "${{ matrix.expect }}" run.out
+
+  # The TUI pair: build both halves, then smoke the SSE stream and the command endpoint.
+  go-tui-dotnet-backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -18,18 +47,25 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Build all samples
-        run: dotnet build BlogCode.slnx --nologo
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: go-tui-dotnet-backend/tui/go.sum
 
-      # The deterministic samples verify their own claims — fail the run if they stop holding.
-      - name: Run self-verifying samples
+      - name: Build backend
+        run: dotnet build go-tui-dotnet-backend/backend --nologo
+
+      - name: Smoke the SSE stream and command endpoint
         run: |
-          dotnet run --project 01-deterministic-kernel --no-build | tee 01.out
-          grep -q "byte-identical  : True" 01.out
-          dotnet run --project 09-market-data-tape --no-build | tee 09.out
-          grep -q "byte-identical  : True" 09.out
-          dotnet run --project 06-crash-safe-state --no-build | tee 06.out
-          grep -q "all 8 steps complete" 06.out
-          dotnet run --project 07-error-envelopes --no-build
-          dotnet run --project 08-context-packs --no-build > /dev/null
-          dotnet run --project 10-simulation-tier --no-build
+          dotnet run --project go-tui-dotnet-backend/backend --no-build &
+          sleep 6
+          curl -s --max-time 5 -N http://127.0.0.1:5058/run/events | head -6 | tee sse.out || true
+          grep -F '"kind":"run"' sse.out
+          curl -s -X POST http://127.0.0.1:5058/run/command \
+            -H 'Content-Type: application/json' -d '{"action":"pause"}' | grep -F '"ok":true'
+
+      - name: Vet and build the TUI
+        working-directory: go-tui-dotnet-backend/tui
+        run: |
+          go vet ./...
+          go build ./...
