@@ -1,5 +1,7 @@
 # blog-code
 
+[![build](https://github.com/shaahink/blog-code/actions/workflows/build.yml/badge.svg)](https://github.com/shaahink/blog-code/actions/workflows/build.yml)
+
 Runnable companion code for the posts at **[shaahink.github.io/site](https://shaahink.github.io/site/blog/)**.
 
 Each folder is a small, self-contained .NET 10 console project that distils one idea from the

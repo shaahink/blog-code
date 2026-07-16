@@ -1,0 +1,35 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build all samples
+        run: dotnet build BlogCode.slnx --nologo
+
+      # The deterministic samples verify their own claims — fail the run if they stop holding.
+      - name: Run self-verifying samples
+        run: |
+          dotnet run --project 01-deterministic-kernel --no-build | tee 01.out
+          grep -q "byte-identical  : True" 01.out
+          dotnet run --project 09-market-data-tape --no-build | tee 09.out
+          grep -q "byte-identical  : True" 09.out
+          dotnet run --project 06-crash-safe-state --no-build | tee 06.out
+          grep -q "all 8 steps complete" 06.out
+          dotnet run --project 07-error-envelopes --no-build
+          dotnet run --project 08-context-packs --no-build > /dev/null
+          dotnet run --project 10-simulation-tier --no-build
