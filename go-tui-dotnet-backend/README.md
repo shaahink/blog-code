@@ -40,6 +40,8 @@ go run .            # or: go run . -url http://somewhere-else:5058
 
 ## What you should see
 
+![The TUI attached to the backend: stage board on the left, live event feed on the right — including the red gate FAIL where the lying agent gets caught, and the fix session that follows.](tui-screenshot.png)
+
 The TUI paints a stage board on the left (`·` pending, `▶` running, `✗` failed,
 `✓` delivered) and a live event feed on the right. The simulated run includes an agent that
 lies about its tests and gets caught by the gate battery, then fixed. Keys:

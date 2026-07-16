@@ -18,6 +18,10 @@ build steps and expected output, no shared solution, no shared build props. Clon
 | [gated-agent-delivery](gated-agent-delivery/) | [Gated delivery for a team of agents](https://shaahink.github.io/site/blog/gated-delivery-for-a-team-of-agents/) | an orchestration loop that never believes its agents: watchdog, independent gates, crash-safe resume |
 | [go-tui-dotnet-backend](go-tui-dotnet-backend/) | [A live TUI in the AI era](https://shaahink.github.io/site/blog/a-live-tui-in-the-ai-era/) | a live, interactive Go (Bubble Tea) TUI attached to a .NET 10 backend over SSE |
 
+The last one, running — a Go TUI fed by a .NET backend over SSE, catching a lying agent red-handed:
+
+![The go-tui-dotnet-backend sample running: stage board, live event feed, one red gate FAIL and its fix session.](go-tui-dotnet-backend/tui-screenshot.png)
+
 ## Requirements
 
 - the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) for the C# samples
